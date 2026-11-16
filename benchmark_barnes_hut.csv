@@ -1,0 +1,10 @@
+N,Threads,Mode,Theta,Seconds,Initial_Force_Error_Percent
+10000,4,Direct,0.5,1.247,0
+10000,4,Barnes-Hut static,0.5,0.45,0.145822
+10000,4,Barnes-Hut costzones,0.5,0.508,0.145822
+10000,2,Direct,0.5,1.456,0
+10000,2,Barnes-Hut static,0.5,0.68,0.145822
+10000,2,Barnes-Hut costzones,0.5,0.888,0.145822
+50000,4,Direct,0.5,65.254,0
+50000,4,Barnes-Hut static,0.5,2.774,0.321483
+50000,4,Barnes-Hut costzones,0.5,3.151,0.321483
