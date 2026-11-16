@@ -31,8 +31,7 @@ uint64_t expand_bits(uint64_t v) {
     v=(v|(v<<4))&0x10C30C30C30C30C3ULL;
     return (v|(v<<2))&0x1249249249249249ULL;
 }
-// Recompute the bounding cube so moving particles are never clipped
-// to the original simulation region.
+
 double morton_sort(vector<Particle>& p) {
     double xmin=p[0].x,ymin=p[0].y,zmin=p[0].z;
     double xmax=xmin,ymax=ymin,zmax=zmin;
@@ -45,6 +44,7 @@ double morton_sort(vector<Particle>& p) {
     auto grid=[&](double x,double low)->uint64_t {
         return static_cast<uint64_t>(max(0.0,min(2097151.0,(x-low)/side*2097152.0)));
     };
+
     #pragma omp parallel for
     for(int i=0;i<(int)p.size();++i) {
         p[i].morton_key=expand_bits(grid(p[i].x,xmin)) |
@@ -56,7 +56,7 @@ double morton_sort(vector<Particle>& p) {
     });
     return side;
 }
-// Morton-sorted particles in one octant form a contiguous interval.
+
 int build_tree(const vector<Particle>& p,vector<Node>& tree,
                int lo,int hi,int level,double size) {
     int k=(int)tree.size();
@@ -137,8 +137,7 @@ vector<int> make_costzones(const vector<Particle>& p,int zones,bool adaptive) {
     }
     return bounds;
 }
-// Mode 0: direct; mode 1: Barnes-Hut equal partition;
-// mode 2: Barnes-Hut adaptive costzones.
+
 void compute_forces(vector<Particle>& p,int threads,int mode,bool report) {
     int n=(int)p.size();
     vector<Node> tree;
@@ -148,8 +147,7 @@ void compute_forces(vector<Particle>& p,int threads,int mode,bool report) {
     }
     auto bounds=make_costzones(p,threads,mode==2);
     vector<long long> loads(threads,0);
-    // Parallelize zones, not thread IDs: even a smaller OpenMP team
-    // will still process every zone.
+
     #pragma omp parallel for schedule(static,1) num_threads(threads)
     for(int z=0;z<threads;++z) {
         for(int i=bounds[z];i<bounds[z+1];++i) {
@@ -187,7 +185,6 @@ void final_half_kick(vector<Particle>& p,double dt) {
         a.vx+=a.fx/a.mass*dt/2; a.vy+=a.fy/a.mass*dt/2; a.vz+=a.fz/a.mass*dt/2;
     }
 }
-// Compare forces on identical initial positions, matching by particle ID.
 double force_error(const vector<Particle>& exact,const vector<Particle>& approx) {
     double num=0,den=0;
     for(const auto& a:approx) {
@@ -217,7 +214,6 @@ int main(int argc,char** argv) {
         a.mass=1; a.work_cost=N-1; a.id=i;
     }
     cout<<"N="<<N<<", threads="<<threads<<", theta="<<THETA<<'\n';
-    // Accuracy test outside simulation timings.
     auto exact=initial, approx=initial;
     compute_forces(exact,threads,0,false);
     compute_forces(approx,threads,1,false);
@@ -243,7 +239,6 @@ int main(int argc,char** argv) {
         if(mode==0) direct_time=seconds;
         cout<<"  Time: "<<seconds<<" s, speedup vs direct: "<<direct_time/seconds<<"x\n";
         csv<<N<<','<<threads<<','<<names[mode]<<','<<THETA<<','<<seconds<<','<<(mode==0?0:error)<<'\n';
-        // Separate, untimed diagnostic at final positions.
         compute_forces(p,threads,mode,true);
     }
 }
